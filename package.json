@@ -1,0 +1,23 @@
+{
+  "name": "anlinet-web",
+  "private": true,
+  "packageManager": "npm@26.12.1",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "turbo": "^2.4.3"
+  },
+  "allowScripts": {
+    "better-sqlite3": true,
+    "bcrypt": true,
+    "prisma": true
+  }
+}
