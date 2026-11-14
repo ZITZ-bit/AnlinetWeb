@@ -13,11 +13,15 @@ Este documento describe cómo desplegar `apps/backend/` (API NestJS + PostgreSQL
 | Campo | Valor |
 |-------|-------|
 | **Runtime** | Node |
-| **Versión de Node** | `>=20` (se declara `"engines": { "node": ">=20.0.0" }` en `apps/backend/package.json`) |
+| **Versión de Node** | `>=20` (se declara `"engines": { "node": ">=20.0.0" }` en `apps/backend/package.json`; Node 26.x es compatible) |
 | **Root Directory** | `apps/backend` |
-| **Build Command** | `npm run build` |
+| **Build Command** | `npm install --include=dev && npm run build` |
 | **Start Command** | `npm run start:prod` |
-| **Instalación de dependencias** | `npm install` (automática de Render) |
+| **Instalación de dependencias** | `npm install --include=dev` (el build necesita las `@types/*` y `typescript`, declaradas en `devDependencies`, pero no se mueven a `dependencies`) |
+
+Rationale del **`--include=dev` en el Build Command**:
+
+Render ejecuta `npm install` con `NODE_ENV=production`, por lo que omite las `devDependencies`. El backend necesita en tiempo de compilación las declaraciones de tipos `@types/bcrypt`, `@types/passport-jwt`, `@types/express` y `typescript`, que viven en `devDependencies`. Se conservan ahí (no se trasladan indiscriminadamente a `dependencies`) y solo se instalan durante el build con `--include=dev`.
 
 Rationale del **Root Directory = `apps/backend`**:
 - Evita construir `apps/frontend/` (Next.js) en el servicio del backend.
@@ -26,8 +30,8 @@ Rationale del **Root Directory = `apps/backend`**:
 
 ## Comandos exactos para Render
 
-- **Build Command:** `npm run build`
-  - Ejecuta `prisma generate` (prebuild) y luego `nest build`. Compila a `apps/backend/dist/`.
+- **Build Command:** `npm install --include=dev && npm run build`
+  - Ejecuta `prisma generate` (prebuild) y luego `nest build`. Compila a `apps/backend/dist/`. El `--include=dev` es necesario porque Render omite `devDependencies` por defecto (`NODE_ENV=production`).
 - **Start Command:** `npm run start:prod`
   - Ejecuta `node dist/main`. Sirve los archivos ya compilados.
 - **Migraciones (manual, controlado):** `npx prisma migrate deploy --config prisma/prisma.config.ts`
@@ -91,8 +95,11 @@ Respuesta ejemplo:
 
 ## Notas y estado de verificación
 
-- Build de producción (`npm run build`): **verificado localmente** (exit 0).
+- Build de producción (`npm install --include=dev && npm run build`): **verificado localmente** (exit 0), simulando las condiciones de Render (`NODE_ENV=production`, `Root Directory = apps/backend`, instalación aislada).
+- Prisma Client: se genera correctamente en el `prebuild` (`prisma generate`) antes de `nest build`.
 - Lint (`npm run lint`): **verificado localmente** (exit 0, solo advertencias preexistentes).
 - Arranque con `node dist/main` (`npm run start:prod`): **por verificar en Render** (no se hizo despliegue real).
-- La base de datos de producción debe estar lista antes de arrancar; `PrismaService` se conecta en `onModuleInit`.
-- No se probó el despliegue en Render. Validar `DATABASE_URL` y `ALLOWED_ORIGINS` en el dashboard antes de considerar el servicio listo.
+- Cambios de configuración:
+  - `tsconfig.build.json`: `compilerOptions.types` ahora es `["node"]` (se quita `"jest"` de la compilación de producción; `src` no usa Jest y `@types/jest` no es necesario para compilarlo, evitando el error TS2688).
+  - Las `@types/*` necesarias (`bcrypt`, `passport-jwt`, `express`) se mantienen en `devDependencies` y se instalan en el build mediante `--include=dev` (no se trasladan a `dependencies`).
+  - `apps/backend/package-lock.json`: regenerado y sincronizado con `package.json` (incluye las entradas resueltas de `@types/*`).
