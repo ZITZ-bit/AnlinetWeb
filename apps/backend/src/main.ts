@@ -14,13 +14,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProduction = process.env.NODE_ENV === 'production';
 
+  const frontendUrl = process.env.FRONTEND_URL;
   const configuredOrigins = (process.env.ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
   const corsOrigin = isProduction
-    ? configuredOrigins
+    ? [...(frontendUrl ? [frontendUrl] : []), ...configuredOrigins]
     : configuredOrigins.length
       ? configuredOrigins
       : ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000', 'http://127.0.0.1:3000'];
