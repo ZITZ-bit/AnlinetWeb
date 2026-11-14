@@ -1,12 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../generated/prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { join } from 'node:path';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const defaultDbUrl = `file:${join(__dirname, '..', '..', 'prisma', 'database', 'dev.db')}`;
-
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? defaultDbUrl,
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
 });
 
 @Injectable()

@@ -3,6 +3,6 @@ import { defineConfig } from "prisma/config";
 export default defineConfig({
   schema: "./schema.prisma",
   datasource: {
-    url: "file:./database/dev.db",
+    url: process.env.DATABASE_URL ?? "postgresql://postgres@localhost:5432/anlinet",
   },
 });
